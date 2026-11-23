@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Juice Stock &amp; Sales Tracker | Cue N Console Arena</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header py-3 px-3 px-md-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="fs-1" aria-hidden="true">🎱</div>
+        <div>
+          <div class="brand-title">CUE N CONSOLE</div>
+          <div class="brand-arena">ARENA</div>
+          <small class="text-muted-soft">Play • Enjoy • Chill</small>
+        </div>
+        <div class="header-divider d-none d-md-block"></div>
+        <div class="d-none d-md-block">
+          <div class="tracker-title">Juice Stock &amp;<br>Sales Tracker</div>
+          <small class="text-muted-soft">Track • Manage • Grow</small>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <span class="fresh-tag text-gold d-none d-lg-inline">Fresh Juice Always!</span>
+        <span class="text-muted-soft small">👤 <span id="userName">…</span></span>
+        <button class="btn btn-outline-light btn-sm" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+    <div class="d-md-none mt-2 tracker-title">Juice Stock &amp; Sales Tracker</div>
+  </header>
+
+  <main class="container-fluid px-3 px-md-4 py-3">
+    <!-- Summary cards -->
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card stat-date">
+          <div class="icon" aria-hidden="true">📅</div>
+          <div class="w-100">
+            <div class="label">Date <span id="weekday" class="text-muted-soft"></span></div>
+            <input type="date" id="dateInput" class="form-control form-control-sm" aria-label="Select date">
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card stat-sales">
+          <div class="icon" aria-hidden="true">🛒</div>
+          <div><div class="label">Total Sales</div><div class="value" id="cTotalSales">0</div><div class="sub">Bottles</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card stat-collection">
+          <div class="icon" aria-hidden="true">₹</div>
+          <div><div class="label">Total Collection</div><div class="value" id="cCollection">₹ 0</div>
+            <div class="sub" id="cSplit">Cash: ₹0 | UPI: ₹0</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card stat-opening">
+          <div class="icon" aria-hidden="true">📦</div>
+          <div><div class="label">Opening Stock</div><div class="value" id="cOpening">0</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card stat-closing">
+          <div class="icon" aria-hidden="true">✅</div>
+          <div><div class="label">Closing Stock</div><div class="value" id="cClosing">0</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card stat-profit">
+          <div class="icon" aria-hidden="true">📈</div>
+          <div><div class="label">Profit</div><div class="value" id="cProfit">₹ 0</div></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-xl">
+        <div class="stat-card stat-pending" id="pendingCard" role="button" tabindex="0" title="Click to see pending payments">
+          <div class="icon" aria-hidden="true">⏳</div>
+          <div><div class="label">Pending</div><div class="value" id="cPending">₹ 0</div><div class="sub" id="cPendingSub">No dues</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="d-flex flex-wrap gap-2 align-items-center mb-3 no-print">
+      <button class="btn btn-gold fw-bold btn-press" id="btnAddSale">＋ Add Sale</button>
+      <button class="btn btn-outline-light btn-press" id="btnRestock">📦 Restock</button>
+      <button class="btn btn-outline-light btn-press" id="btnBrand">🍊 Add / Edit Brand</button>
+      <button class="btn btn-outline-danger btn-press" id="btnDeleteBrand">🗑 Delete Brand</button>
+      <span class="toolbar-sep d-none d-md-inline-block"></span>
+      <button class="btn btn-outline-info btn-press" id="btnToday" title="Jump to today">📅 Today</button>
+      <span class="toolbar-sep d-none d-md-inline-block"></span>
+      <button class="btn btn-outline-light btn-press" id="btnRefresh" title="Reload data">🔄 Refresh</button>
+      <button class="btn btn-outline-success btn-press" id="btnCsv" title="Download sales as CSV">⬇ Export CSV</button>
+    </div>
+
+    <!-- Quick sell -->
+    <section class="panel-neon p-3 mb-3 no-print">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+        <h2 class="section-title mb-0">⚡ Quick Sell</h2>
+        <small class="text-muted-soft">One tap = 1 bottle at the default rate, customer “Walk-in”</small>
+      </div>
+      <div class="row g-2" id="quickSell"></div>
+    </section>
+
+    <!-- Sales table -->
+    <section class="panel-neon p-2 mb-3">
+      <div class="d-flex flex-wrap gap-2 align-items-center p-2 no-print">
+        <div class="btn-group" role="group" aria-label="Filter by payment mode" id="payFilter">
+          <button type="button" class="btn btn-sm btn-light btn-press" data-filter="All">All</button>
+          <button type="button" class="btn btn-sm btn-outline-warning btn-press" data-filter="Cash">Cash</button>
+          <button type="button" class="btn btn-sm btn-outline-primary btn-press" data-filter="UPI">UPI</button>
+          <button type="button" class="btn btn-sm btn-outline-success btn-press" data-filter="Paid">✔ Paid</button>
+          <button type="button" class="btn btn-sm btn-outline-danger btn-press" data-filter="Pending">⏳ Pending</button>
+        </div>
+        <input type="search" class="form-control form-control-sm search-box" id="searchBox"
+               placeholder="🔍 Search customer, brand, remarks…" aria-label="Search sales">
+        <button type="button" class="btn btn-sm btn-outline-light btn-press d-none" id="btnClearFilter">✖ Clear</button>
+        <small class="text-muted-soft ms-auto" id="filterInfo"></small>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-neon table-sales align-middle" id="salesTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Time</th>
+              <th>Customer Name</th>
+              <th>Juice Brand / Flavour</th>
+              <th class="text-end">Qty</th>
+              <th class="text-end">Rate (₹)</th>
+              <th class="text-end">Total (₹)</th>
+              <th class="text-center">Payment Mode</th>
+              <th class="text-end text-success">Paid (₹)</th>
+              <th class="text-end text-danger">Pending (₹)</th>
+              <th>Remarks</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="salesBody"></tbody>
+          <tfoot>
+            <tr>
+              <td></td><td></td><td id="fLabel">Total</td><td></td>
+              <td class="text-end" id="fQty">0</td><td></td>
+              <td class="text-end" id="fAmount">₹ 0</td>
+              <td class="small-note text-center" id="fSplit"></td>
+              <td class="text-end text-success fw-bold" id="fPaid">₹ 0</td>
+              <td class="text-end text-danger fw-bold" id="fPending">₹ 0</td>
+              <td></td><td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- Pending payments -->
+    <section class="panel-neon p-3 mb-3" id="pendingPanel">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+        <h2 class="section-title mb-0">⏳ Pending Payments <span class="badge bg-danger ms-1" id="pendingBadge">0</span></h2>
+        <small class="text-muted-soft" id="recoveredNote"></small>
+      </div>
+      <div class="table-responsive stock-table-container">
+        <table class="table table-neon table-hover table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th class="text-center">Sales</th>
+              <th class="text-center">Bottles</th>
+              <th>Oldest due</th>
+              <th class="text-end">Amount due (₹)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="pendingBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Bottom row -->
+    <div class="row g-3">
+      <div class="col-lg-5">
+        <section class="panel-neon p-3 h-100 stock-panel-wrap">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="section-title mb-0">📦 Juice Stock Status</h2>
+            <small class="text-muted-soft stock-click-hint">Click row to filter sales</small>
+          </div>
+          <div class="table-responsive stock-table-container">
+            <table class="table table-neon table-stock table-hover align-middle mb-0">
+              <thead>
+                <tr>
+                  <th class="text-start">Juice Brand</th>
+                  <th class="text-center">Opening</th>
+                  <th class="text-center">Purchased</th>
+                  <th class="text-center">Sold</th>
+                  <th class="text-center">Closing</th>
+                  <th class="text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody id="stockBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <section class="panel-neon p-3 h-100">
+          <h2 class="section-title mb-3">₹ Payment Mode</h2>
+          <div class="d-flex align-items-center gap-3 flex-wrap justify-content-center">
+            <div class="pie" id="pie" role="img" aria-label="Payment mode split">
+              <span class="pie-label" id="pieUpi"></span>
+              <span class="pie-label" id="pieCash"></span>
+            </div>
+            <div>
+              <div class="mb-2"><span class="legend-dot" style="background:#1e90ff"></span><strong>UPI</strong><div class="ms-4" id="lgUpi">₹0</div></div>
+              <div><span class="legend-dot" style="background:#ff8c00"></span><strong>Cash</strong><div class="ms-4" id="lgCash">₹0</div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <section class="panel-neon p-3 h-100">
+          <h2 class="section-title mb-2">🔔 Alerts</h2>
+          <div class="alerts-scroll" id="alertsBox"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="app-footer text-center py-2 mt-3 px-3">
+    🏆 Keep your juice stock well managed for more happy customers! &nbsp;•&nbsp; Cue N Console Arena
+  </footer>
+
+  <!-- Add Sale modal -->
+  <div class="modal fade" id="saleModal" tabindex="-1" aria-labelledby="saleModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" id="saleForm" novalidate>
+        <div class="modal-header"><h5 class="modal-title" id="saleModalTitle">Add Sale</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body">
+          <div class="alert alert-danger py-2 d-none" id="saleError"></div>
+          <div class="row g-3">
+            <div class="col-7"><label class="form-label" for="sCustomer">Customer name</label>
+              <input class="form-control" id="sCustomer" maxlength="60" required></div>
+            <div class="col-5"><label class="form-label" for="sTime">Time</label>
+              <input class="form-control" type="time" id="sTime" required></div>
+            <div class="col-12"><label class="form-label" for="sBrand">Juice brand / flavour</label>
+              <select class="form-select" id="sBrand" required></select>
+              <div class="form-text text-muted-soft" id="sStockHint"></div></div>
+            <div class="col-4"><label class="form-label" for="sQty">Qty</label>
+              <input class="form-control" type="number" min="1" step="1" id="sQty" value="1" required></div>
+            <div class="col-4"><label class="form-label" for="sRate">Rate (₹)</label>
+              <input class="form-control" type="number" min="0" step="0.5" id="sRate" required></div>
+            <div class="col-4"><label class="form-label" for="sAmount">Amount (₹)</label>
+              <input class="form-control" id="sAmount" readonly tabindex="-1"></div>
+            <div class="col-12"><label class="form-label d-block">Payment status</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="sStatus" id="stPaid" value="Paid" checked>
+                <label class="btn btn-outline-success" for="stPaid">✔ Paid</label>
+                <input type="radio" class="btn-check" name="sStatus" id="stPending" value="Pending">
+                <label class="btn btn-outline-danger" for="stPending">⏳ Pending (pay later)</label>
+              </div></div>
+            <div class="col-12" id="payModeBox"><label class="form-label d-block">Payment mode</label>
+              <div class="btn-group w-100" role="group">
+                <input type="radio" class="btn-check" name="sPay" id="payUpi" value="UPI" checked>
+                <label class="btn btn-outline-primary" for="payUpi">UPI</label>
+                <input type="radio" class="btn-check" name="sPay" id="payCash" value="Cash">
+                <label class="btn btn-outline-warning" for="payCash">Cash</label>
+              </div></div>
+            <div class="col-12"><label class="form-label" for="sRemarks">Remarks (optional)</label>
+              <input class="form-control" id="sRemarks" maxlength="120"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-gold fw-bold" id="saleSubmit">Save sale</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Restock modal -->
+  <div class="modal fade" id="restockModal" tabindex="-1" aria-labelledby="restockTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" id="restockForm" novalidate>
+        <div class="modal-header"><h5 class="modal-title" id="restockTitle">Restock (purchase bottles)</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body">
+          <div class="alert alert-danger py-2 d-none" id="restockError"></div>
+          <div class="mb-3"><label class="form-label" for="rBrand">Juice brand</label><select class="form-select" id="rBrand" required></select></div>
+          <div><label class="form-label" for="rQty">Bottles purchased</label>
+            <input class="form-control" type="number" min="1" step="1" id="rQty" required></div>
+          <div class="form-text text-muted-soft mt-2">Added to the selected date shown on the dashboard.</div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-gold fw-bold">Add stock</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Brand modal -->
+  <div class="modal fade" id="brandModal" tabindex="-1" aria-labelledby="brandTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content" id="brandForm" novalidate>
+        <div class="modal-header"><h5 class="modal-title" id="brandTitle">Add / Edit Brand</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body">
+          <div class="alert alert-danger py-2 d-none" id="brandError"></div>
+          <div class="row g-3">
+            <div class="col-12"><label class="form-label" for="bName">Brand name (pick existing to edit)</label>
+              <input class="form-control" id="bName" list="brandList" maxlength="40" required autocomplete="off">
+              <datalist id="brandList"></datalist></div>
+            <div class="col-6"><label class="form-label" for="bRate">Selling rate (₹)</label>
+              <input class="form-control" type="number" min="0" step="0.5" id="bRate" required></div>
+            <div class="col-6"><label class="form-label" for="bCost">Cost price (₹)</label>
+              <input class="form-control" type="number" min="0" step="0.5" id="bCost" required></div>
+            <div class="col-6"><label class="form-label" for="bLow">Low-stock alert at</label>
+              <input class="form-control" type="number" min="0" step="1" id="bLow" value="10" required></div>
+            <div class="col-6"><label class="form-label" for="bInitial">Opening stock (new only)</label>
+              <input class="form-control" type="number" min="0" step="1" id="bInitial" value="0"></div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-gold fw-bold">Save brand</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Brand Modal -->
+  <div class="modal fade" id="deleteBrandModal" tabindex="-1" aria-labelledby="delBrandTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <form class="modal-content" id="deleteBrandForm" novalidate>
+        <div class="modal-header py-2">
+          <h5 class="modal-title fs-6 text-danger" id="delBrandTitle">🗑 Delete Brand</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body py-3">
+          <div class="alert alert-danger py-2 d-none" id="delBrandError"></div>
+          <p class="text-muted-soft small mb-3">Select the juice brand you want to permanently remove from the stock list.</p>
+          <div class="mb-3">
+            <label class="form-label" for="delBrandSelect">Select Brand</label>
+            <select class="form-select" id="delBrandSelect" required></select>
+            <div class="form-text text-warning mt-1" id="delBrandWarning"></div>
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="button" class="btn btn-sm btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-danger fw-bold" id="delBrandSubmit">Delete Brand</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Quick Sell Modal -->
+  <div class="modal fade" id="quickSellModal" tabindex="-1" aria-labelledby="qsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <form class="modal-content" id="quickSellForm" novalidate>
+        <div class="modal-header py-2">
+          <h5 class="modal-title fs-6" id="qsTitle">⚡ Quick Sell</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body py-3">
+          <div class="alert alert-danger py-2 d-none" id="qsError"></div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold text-gold fs-5" id="qsBrand">Brand</span>
+            <span class="badge bg-primary text-white" id="qsRate">₹ 80</span>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="qsCustomer" id="qsCustomerLabel">Customer Name</label>
+            <input class="form-control" id="qsCustomer" placeholder="e.g. Rahul Kumar or Walk-in" maxlength="60" required autocomplete="off">
+            <div class="form-text text-muted-soft" id="qsHint">Enter customer name (or press Enter)</div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label" for="qsQty">Quantity</label>
+              <div class="input-group input-group-sm">
+                <button class="btn btn-outline-secondary" type="button" id="qsQtyMinus">−</button>
+                <input type="number" class="form-control text-center fw-bold" id="qsQty" value="1" min="1" step="1" required>
+                <button class="btn btn-outline-secondary" type="button" id="qsQtyPlus">＋</button>
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Total Amount</label>
+              <div class="form-control form-control-sm text-end fw-bold text-gold" id="qsTotal">₹ 80</div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label d-block">Payment Mode / Status</label>
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" name="qsMode" id="qsModeUpi" value="UPI">
+              <label class="btn btn-sm btn-outline-primary" for="qsModeUpi">UPI</label>
+              <input type="radio" class="btn-check" name="qsMode" id="qsModeCash" value="Cash">
+              <label class="btn btn-sm btn-outline-warning" for="qsModeCash">Cash</label>
+              <input type="radio" class="btn-check" name="qsMode" id="qsModeLater" value="Pending">
+              <label class="btn btn-sm btn-outline-danger" for="qsModeLater">⏳ Later</label>
+            </div>
+          </div>
+          <div class="mb-2 d-none" id="qsRemarksBox">
+            <label class="form-label" for="qsRemarks">Credit Notes / Phone</label>
+            <input class="form-control form-control-sm" id="qsRemarks" placeholder="Optional notes" maxlength="120">
+          </div>
+        </div>
+        <div class="modal-footer py-2">
+          <button type="button" class="btn btn-sm btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-gold fw-bold px-3" id="qsSubmit">Sell Now</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Collect payment modal -->
+  <div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="payTitle">Collect payment</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body text-center">
+          <div class="alert alert-danger py-2 d-none" id="payError"></div>
+          <div class="text-muted-soft" id="payWho"></div>
+          <div class="display-6 text-gold fw-bold my-2" id="payAmount"></div>
+          <div class="text-muted-soft small mb-3">How did the customer pay?</div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary flex-fill btn-press" id="payUpiBtn">UPI</button>
+            <button type="button" class="btn btn-warning flex-fill btn-press" id="payCashBtn">Cash</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastBox"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
