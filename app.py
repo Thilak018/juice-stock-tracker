@@ -182,9 +182,21 @@ def api_login():
 
     data = body_json()
     username = s(data, "username")
-    password = str(data.get("password") or "")
-    user = users.find_one({"username": username}) if username else None
-    if not user or not check_password_hash(user["hash"], password):
+    raw_password = str(data.get("password") or "")
+    clean_password = raw_password.strip()
+
+    user = None
+    if username:
+        # Case-insensitive matching for email / username
+        user = users.find_one({"username": {"$regex": f"^{re.escape(username)}$", "$options": "i"}})
+        if not user:
+            user = users.find_one({"username": username})
+
+    authed = False
+    if user:
+        authed = check_password_hash(user["hash"], raw_password) or check_password_hash(user["hash"], clean_password)
+
+    if not user or not authed:
         if rec:
             rec[0] += 1
         else:
@@ -593,8 +605,8 @@ def seed():
     sales.create_index("date")
     purchases.create_index("date")
 
-    admin_user = (os.environ.get("ADMIN_USERNAME") or "admin").strip()
-    admin_pw = os.environ.get("ADMIN_PASSWORD") or "admin123"
+    admin_user = (os.environ.get("ADMIN_USERNAME") or "cuenconsolearena@gmail.com").strip()
+    admin_pw = os.environ.get("ADMIN_PASSWORD") or "Arena@cnc"
 
     existing = users.find_one({"username": admin_user})
     if not existing:
