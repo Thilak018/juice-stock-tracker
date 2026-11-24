@@ -41,7 +41,7 @@
     })
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (data) {
-          if (!res.ok) throw new Error(data.error || 'Login failed');
+          if (!res.ok) throw new Error(data.error || ('Server returned HTTP ' + res.status));
           window.location.href = '/';
         });
       })

@@ -69,6 +69,18 @@ def handle_api_error(e):
     return jsonify(error=e.message), e.status
 
 
+@app.errorhandler(Exception)
+def handle_unexpected_exception(e):
+    if isinstance(e, ApiError):
+        return jsonify(error=e.message), e.status
+    err_str = str(e)
+    if "ServerSelectionTimeoutError" in type(e).__name__ or "timeout" in err_str.lower():
+        return jsonify(error="Cannot connect to Database. Please verify MONGO_URI in Render and Atlas Network Access (0.0.0.0/0)."), 500
+    if request.path.startswith("/api/"):
+        return jsonify(error=f"Server error: {err_str}"), 500
+    return f"Server error: {err_str}", 500
+
+
 @app.errorhandler(404)
 def handle_404(_):
     if request.path.startswith("/api/"):
@@ -184,6 +196,27 @@ def api_login():
     session.permanent = True
     session["user"] = user["username"]
     return jsonify(username=user["username"], name=user.get("name", user["username"]))
+
+
+@app.get("/api/health")
+def api_health():
+    try:
+        client.admin.command("ping")
+        u_count = users.count_documents({})
+        return jsonify(
+            status="ok",
+            mongo_connected=True,
+            database=MONGO_DB,
+            users_count=u_count,
+            mongo_uri_configured="MONGO_URI" in os.environ
+        )
+    except Exception as e:
+        return jsonify(
+            status="error",
+            mongo_connected=False,
+            error=str(e),
+            mongo_uri_configured="MONGO_URI" in os.environ
+        ), 500
 
 
 @app.post("/api/logout")
