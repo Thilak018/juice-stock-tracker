@@ -25,6 +25,7 @@ def load_secret_key():
     """Use SECRET_KEY from env, otherwise create one once and keep it in .secret_key."""
     key = os.environ.get("SECRET_KEY")
     if key:
+        
         return key
     path = os.path.join(BASE_DIR, ".secret_key")
     if os.path.exists(path):
@@ -559,10 +560,16 @@ def seed():
     sales.create_index("date")
     purchases.create_index("date")
 
-    if users.count_documents({}) == 0:
-        pw = os.environ.get("ADMIN_PASSWORD") or "admin123"
-        users.insert_one({"username": "admin", "name": "Arena Admin", "hash": generate_password_hash(pw)})
-        print("Created default user 'admin' (change the password!).")
+    admin_user = (os.environ.get("ADMIN_USERNAME") or "admin").strip()
+    admin_pw = os.environ.get("ADMIN_PASSWORD") or "admin123"
+
+    existing = users.find_one({"username": admin_user})
+    if not existing:
+        users.insert_one({"username": admin_user, "name": "Arena Admin", "hash": generate_password_hash(admin_pw)})
+        print(f"Created admin user '{admin_user}'.")
+    elif os.environ.get("ADMIN_PASSWORD"):
+        users.update_one({"username": admin_user}, {"$set": {"hash": generate_password_hash(admin_pw)}})
+        print(f"Updated password for user '{admin_user}'.")
 
     if products.count_documents({}) == 0:
         products.insert_many([
